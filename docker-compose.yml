@@ -1,0 +1,35 @@
+#docker-compose up
+version: "3"
+#service is essentially a running container.
+services:
+  #same name as in the configuration.
+  ms-sql-server:
+    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    #ENV VARIABLES
+    environment:
+      ACCEPT_EULA: "Y"
+      #sql administrator password.
+      MSSQL_SA_PASSWORD: "Pa55w0rd_2019"
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    #race conidtions zzzz...
+    # healthcheck:
+    #   test: CMD /opt/mssql-tools/bin/sqlcmd -S ms-sql-server -U SA -P Pa55w0rd_2019 -Q "SELECT 1" -b -o /dev/null
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 10
+    #   start_period: 10s
+
+  colour-api:
+    #build whatever is in our dockerfile.
+    build: .
+    environment:
+      DBServer: "ms-sql-server"
+      DBPassword: "Pa55w0rd_2019"
+    ports:
+      - "8080:80"
+    depends_on:
+      - ms-sql-server
+    #should ideally implement healthcheck on db in future.
+    restart: on-failure
